@@ -48,8 +48,8 @@
 
 <img width="350" alt="image" src="https://github.com/user-attachments/assets/901b0058-129c-46b9-96bd-a96c7ed3a4bc" /> <img width="350" alt="Снимок4" src="https://github.com/user-attachments/assets/4e05f623-a0fa-4648-b8a3-8b2f91e5cd0a" />
 <img width="350" alt="Снимок2" src="https://github.com/user-attachments/assets/7d3cf449-ac4f-49e4-bca0-ee766cfd9a51" /> <img width="350" alt="Снимок1" src="https://github.com/user-attachments/assets/5387a65b-f5a1-43ae-a5e3-da648f5af0f6" />
-<img width="350" alt="Снимок3" src="https://github.com/user-attachments/assets/4fde1380-490f-4724-8e45-401588ede380" /> <img width="250" alt="Снимок" src="https://github.com/user-attachments/assets/7dd95eff-59b2-4a91-aab6-59e7c8380830" />
-<img width="180" alt="Screenshot 1" src="https://github.com/user-attachments/assets/48e2e0f6-a065-4f97-95b4-c4b0c728911b" /> | <img width="180" alt="Screenshot 2" src="https://github.com/user-attachments/assets/d81b10fb-3aad-433c-ab4f-5087e774baed" /> | <img width="180" alt="Screenshot 3" src="https://github.com/user-attachments/assets/e53786f9-3692-4cc6-bc00-e5cc9cb3bd79" /> |
+<img width="350" alt="Снимок3" src="https://github.com/user-attachments/assets/4fde1380-490f-4724-8e45-401588ede380" /> <img width="180" alt="Screenshot 1" src="https://github.com/user-attachments/assets/48e2e0f6-a065-4f97-95b4-c4b0c728911b" />| <img width="180" alt="Screenshot 2" src="https://github.com/user-attachments/assets/d81b10fb-3aad-433c-ab4f-5087e774baed" />  | <img width="180" alt="Screenshot 3" src="https://github.com/user-attachments/assets/e53786f9-3692-4cc6-bc00-e5cc9cb3bd79" /> |
+
 
 ---
 
