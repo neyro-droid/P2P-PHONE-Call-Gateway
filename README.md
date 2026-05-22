@@ -46,16 +46,9 @@
 
 ## 📸 Screenshots
 
-<p align="center">
-  <img src="<img width="1220" height="2712" alt="Screenshot_2026-05-22-21-39-26-136_com remotephone" src="https://github.com/user-attachments/assets/5e355011-f273-47d1-8164-f6e5db1fb29f" />
-" width="200"/>
-  <img src="<img width="1506" height="1154" alt="Снимок1" src="https://github.com/user-attachments/assets/e8547b78-999d-47ba-9df5-d8f68c0089ab" />
-" width="200"/>
-  <img src="<img width="1220" height="2712" alt="Screenshot_2026-05-22-21-39-35-814_com remotephone" src="https://github.com/user-attachments/assets/c903df17-0dff-423c-b196-e5070d8544a3" />
-" width="200"/>
-  <img src="<img width="1513" height="1161" alt="Снимок2" src="https://github.com/user-attachments/assets/a1ec9ee6-8d8b-446d-aeed-0c0248271634" />
-" width="200"/>
-</p>
+<img width="350" alt="image" src="https://github.com/user-attachments/assets/901b0058-129c-46b9-96bd-a96c7ed3a4bc" /> <img width="350" alt="Снимок4" src="https://github.com/user-attachments/assets/4e05f623-a0fa-4648-b8a3-8b2f91e5cd0a" />
+<img width="350" alt="Снимок2" src="https://github.com/user-attachments/assets/7d3cf449-ac4f-49e4-bca0-ee766cfd9a51" /> <img width="350" alt="Снимок1" src="https://github.com/user-attachments/assets/5387a65b-f5a1-43ae-a5e3-da648f5af0f6" />
+<img width="350" alt="Снимок3" src="https://github.com/user-attachments/assets/4fde1380-490f-4724-8e45-401588ede380" /> <img width="250" alt="Снимок" src="https://github.com/user-attachments/assets/7dd95eff-59b2-4a91-aab6-59e7c8380830" />
 
 ---
 
