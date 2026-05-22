@@ -47,10 +47,14 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/dialer.PNG" width="200"/>
-  <img src="screenshots/contacts.PNG" width="200"/>
-  <img src="screenshots/sms.PNG" width="200"/>
-  <img src="screenshots/logs.PNG" width="200"/>
+  <img src="<img width="1220" height="2712" alt="Screenshot_2026-05-22-21-39-26-136_com remotephone" src="https://github.com/user-attachments/assets/5e355011-f273-47d1-8164-f6e5db1fb29f" />
+" width="200"/>
+  <img src="<img width="1506" height="1154" alt="Снимок1" src="https://github.com/user-attachments/assets/e8547b78-999d-47ba-9df5-d8f68c0089ab" />
+" width="200"/>
+  <img src="<img width="1220" height="2712" alt="Screenshot_2026-05-22-21-39-35-814_com remotephone" src="https://github.com/user-attachments/assets/c903df17-0dff-423c-b196-e5070d8544a3" />
+" width="200"/>
+  <img src="<img width="1513" height="1161" alt="Снимок2" src="https://github.com/user-attachments/assets/a1ec9ee6-8d8b-446d-aeed-0c0248271634" />
+" width="200"/>
 </p>
 
 ---
