@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>P2P Phone Gateway</title>
+  <style>
+    :root{--bg:#08080f;--card:#12121e;--card2:#0e1622;--border:#1e2035;--accent:#64ffda;--text:#d0d8f0;--muted:#5a6a8a;--danger:#ff4444;--success:#00e676;--warn:#ffab40}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+    button{cursor:pointer;font-family:inherit}
+
+    /* CONNECT */
+    #connect-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 0%,#0d1535 0%,var(--bg) 65%)}
+    .connect-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+    .connect-box h1{font-size:1.8rem;margin-bottom:6px}
+    .sub{color:var(--muted);font-size:13px;margin-bottom:28px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+    .field input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+    .field input:focus{border-color:var(--accent)}
+    .server-row{display:flex;gap:8px}
+    .server-row .host{flex:1}
+    .server-row .port{width:90px}
+    .btn-primary{width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;margin-top:6px;transition:opacity .2s}
+    .btn-primary:hover{opacity:.88}.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+    .err-box{background:rgba(255,68,68,.12);border:1px solid var(--danger);border-radius:9px;padding:10px 12px;margin-bottom:14px;color:#ff8a8a;font-size:13px;display:none}
+    .hint{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6}
+    .hint code{background:var(--card2);padding:2px 6px;border-radius:4px;color:var(--accent)}
+    .conn-status{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;min-height:18px}
+
+    /* APP */
+    #app{display:none;flex-direction:column;height:100vh}
+    header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+    header h1{font-size:14px;font-weight:700}
+    .hdr-r{display:flex;align-items:center;gap:8px}
+    .badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+    .badge.ok{background:rgba(0,230,118,.15);color:var(--success);border:1px solid var(--success)}
+    .badge.no{background:rgba(255,68,68,.12);color:var(--danger);border:1px solid var(--danger)}
+    .badge.wait{background:rgba(255,171,64,.12);color:var(--warn);border:1px solid var(--warn)}
+    .btn-sm{background:rgba(255,68,68,.15);color:var(--danger);border:1px solid var(--danger);border-radius:8px;padding:5px 10px;font-size:12px}
+
+    #status-bar{padding:7px 16px;font-size:12px;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+    #status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+    #status-dot.ok{background:var(--success);box-shadow:0 0 6px var(--success)}
+    #status-dot.wait{background:var(--warn);animation:pulse 1s infinite}
+    #status-dot.err{background:var(--danger)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    #call-bar{display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(90deg,#0d2a0d,#0a1a0a);border-bottom:1px solid #1a4a1a;flex-shrink:0}
+    #call-bar.on{display:flex}
+    .cpulse{width:9px;height:9px;border-radius:50%;background:var(--success);animation:pulse 1.2s infinite;flex-shrink:0}
+    .cpulse.ring{background:var(--warn)}
+    .cinfo{display:flex;align-items:center;gap:10px}
+    .cacts{display:flex;gap:8px}
+    .btn-acc{background:var(--success);color:#000;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700}
+    .btn-rej{background:var(--danger);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700}
+    .btn-rec{border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;border:1px solid var(--muted);background:transparent;color:var(--text)}
+    .btn-rec.on{background:rgba(255,68,68,.2);border-color:var(--danger);color:var(--danger);animation:pulse 1.5s infinite}
+
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+    .tbtn{flex:1;padding:11px 6px;border:none;background:transparent;color:var(--muted);font-size:12px;border-bottom:2px solid transparent;transition:all .2s}
+    .tbtn.act{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+    .tc{flex:1;overflow-y:auto;padding:16px}
+    .pane{display:none}.pane.act{display:block}
+
+    .sim-sel{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    .sbtn{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card2);color:var(--muted)}
+    .sbtn.act{background:rgba(100,255,218,.12);border-color:var(--accent);color:var(--accent)}
+
+    .dialer{max-width:320px;margin:0 auto}
+    .di-row{display:flex;gap:8px;margin-bottom:14px}
+    .di{flex:1;background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:20px;text-align:center;letter-spacing:1px;outline:none}
+    .di:focus{border-color:var(--accent)}
+    .btn-del{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:0 14px;color:var(--muted);font-size:18px}
+    .kpad{margin-bottom:18px}
+    .krow{display:flex;gap:8px;margin-bottom:8px}
+    .kbtn{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px 0;color:var(--text);font-size:18px;font-weight:600;transition:background .1s}
+    .kbtn:hover{background:var(--card2)}.kbtn:active{background:var(--border)}
+    .dact{display:flex;justify-content:center}
+    .btn-call{background:var(--success);border:none;border-radius:50%;width:64px;height:64px;font-size:24px;box-shadow:0 4px 20px rgba(0,230,118,.25)}
+
+    .empty{text-align:center;padding:40px;color:var(--muted)}
+    .stitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+    .item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
+    .ico{font-size:17px;flex-shrink:0}
+    .ibody{flex:1;min-width:0}
+    .ititle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .imeta{font-size:11px;color:var(--muted)}
+    .iacts{display:flex;gap:5px;flex-shrink:0}
+    .bico{background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px}
+    .bico:hover{background:var(--card2)}
+
+    .scomp{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
+    .scomp h4{color:var(--accent);font-size:13px;margin-bottom:10px}
+    .srow{display:flex;gap:8px;margin-bottom:8px}
+    .srow input,.srow textarea{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;outline:none;font-family:inherit}
+    .srow input:focus,.srow textarea:focus{border-color:var(--accent)}
+    .srow textarea{resize:vertical;min-height:56px}
+    .btn-send{background:var(--accent);color:#000;border:none;border-radius:9px;padding:9px 16px;font-weight:700;font-size:13px}
+
+    #log-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    #log-toolbar span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .log-btns{display:flex;gap:6px}
+    .log-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--muted)}
+    .log-btn:hover{color:var(--text)}
+    #log-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;height:calc(100vh - 220px);overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.7}
+    .log-ok{color:var(--success)}.log-err{color:#ff6b6b}.log-warn{color:var(--warn)}.log-def{color:var(--muted)}
+
+    /* test panel */
+    .test-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px}
+    .test-panel h4{color:var(--accent);font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+    .test-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    .test-row label{font-size:12px;color:var(--muted);width:90px;flex-shrink:0}
+    .btn-test{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;color:var(--text);min-width:110px;transition:background .15s}
+    .btn-test:hover{background:var(--border)}
+    .btn-test.running{background:rgba(100,255,218,.12);border-color:var(--accent);color:var(--accent)}
+    .btn-test.ok{background:rgba(0,230,118,.12);border-color:var(--success);color:var(--success)}
+    .btn-test.err{background:rgba(255,68,68,.12);border-color:var(--danger);color:var(--danger)}
+    .test-result{font-size:12px;color:var(--muted);flex:1}
+    .vol-bar{width:120px;height:8px;background:var(--card2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+    .vol-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .08s;width:0%}
+    .perm-banner{background:rgba(255,171,64,.1);border:1px solid var(--warn);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--warn);display:none;align-items:center;gap:10px}
+    .perm-banner button{background:var(--warn);color:#000;border:none;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    /* audio player */
+    #audio-bar{display:none;align-items:center;gap:10px;padding:8px 16px;background:var(--card2);border-bottom:1px solid var(--border);flex-shrink:0;font-size:12px;color:var(--muted)}
+    #audio-bar.on{display:flex}
+    .audio-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:pulse 1s infinite}
+  </style>
+</head>
+<body>
+
+<!-- CONNECT -->
+<div id="connect-screen">
+  <div class="connect-box">
+    <h1>🔒 P2P Gateway</h1>
+    <p class="sub">Direct WebSocket · No STUN/TURN/MQTT</p>
+    <div id="err-box" class="err-box"></div>
+    <!-- Баннер: HTTP = нет микрофона -->
+    <div id="http-warn" class="perm-banner" style="display:none">
+      <span>🔒 Microphone requires HTTPS. Open <strong id="https-link-txt"></strong> instead</span>
+      <button onclick="gotoHttps()">Switch to HTTPS</button>
+    </div>
+    <div class="field">
+      <label>Server address (your PC)</label>
+      <div class="server-row">
+        <input class="host" id="srv-host" type="text" placeholder="192.168.1.x" value=""/>
+        <input class="port" id="srv-port" type="number" placeholder="8765" value="8765"/>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-conn" onclick="doConnect()">🔗 Connect</button>
+    <div class="conn-status" id="conn-status"></div>
+    <!-- Баннер запроса разрешений — показывается если микрофон не разрешён -->
+    <div id="perm-banner" class="perm-banner">
+      <span>⚠️ Microphone access required for audio calls</span>
+      <button onclick="requestMicPermission()">Allow Mic</button>
+    </div>
+    <div class="hint">
+      Сервер запустится сам — браузер откроется автоматически.<br>
+      Или введи IP вручную и нажми Connect.
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <h1>📱 P2P Gateway</h1>
+    <div class="hdr-r">
+      <span id="conn-badge" class="badge wait">⏳ Connecting</span>
+      <button class="btn-sm" onclick="doDisconnect()">■ Stop</button>
+    </div>
+  </header>
+  <div id="status-bar"><div id="status-dot"></div><span id="status-text">Connecting...</span><span id="rtt-badge" style="margin-left:auto;font-size:11px;color:var(--muted);display:none"></span></div>
+  <div id="audio-bar"><div class="audio-dot"></div><span>🎙 Audio streaming</span></div>
+
+  <div id="call-bar">
+    <div class="cinfo">
+      <div id="cpulse" class="cpulse"></div>
+      <div>
+        <div id="c-status" style="font-weight:700;font-size:14px"></div>
+        <div id="c-number" style="color:var(--muted);font-size:12px"></div>
+        <div id="c-rtt" style="color:var(--muted);font-size:11px;display:none"></div>
+      </div>
+    </div>
+    <div class="cacts">
+      <button id="btn-acc" class="btn-acc" style="display:none" onclick="cmd({type:'accept_call'})">✅ Accept</button>
+      <button class="btn-rej" onclick="cmd({type:'hangup'})">📵 Hang Up</button>
+      <button id="btn-rec" class="btn-rec" onclick="toggleRec()">⏺ Rec</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tbtn act" onclick="tab('dialer',this)">📞 Dial</button>
+    <button class="tbtn" onclick="tab('history',this);setTimeout(loadHistory,200)">📋 History</button>
+    <button class="tbtn" onclick="tab('contacts',this);setTimeout(loadContacts,200)">👤 Contacts</button>
+    <button class="tbtn" onclick="tab('sms',this);setTimeout(loadSms,200)">💬 SMS</button>
+    <button class="tbtn" onclick="tab('logs',this)">🔍 Logs</button>
+    <button class="tbtn" onclick="tab('test',this)">🎧 Test</button>
+  </div>
+
+  <div class="tc">
+    <div id="p-dialer" class="pane act">
+      <div id="sim-sel" class="sim-sel"></div>
+      <div class="dialer">
+        <div class="di-row">
+          <input id="di" type="tel" class="di" placeholder="+7 999 123 45 67"/>
+          <button class="btn-del" onclick="diDel()">⌫</button>
+        </div>
+        <div class="kpad">
+          <div class="krow"><button class="kbtn" onclick="diAdd('1')">1</button><button class="kbtn" onclick="diAdd('2')">2</button><button class="kbtn" onclick="diAdd('3')">3</button></div>
+          <div class="krow"><button class="kbtn" onclick="diAdd('4')">4</button><button class="kbtn" onclick="diAdd('5')">5</button><button class="kbtn" onclick="diAdd('6')">6</button></div>
+          <div class="krow"><button class="kbtn" onclick="diAdd('7')">7</button><button class="kbtn" onclick="diAdd('8')">8</button><button class="kbtn" onclick="diAdd('9')">9</button></div>
+          <div class="krow"><button class="kbtn" onclick="diAdd('*')">✱</button><button class="kbtn" onclick="diAdd('0')" oncontextmenu="diAdd('+');return false;" title="Long press = +">0</button><button class="kbtn" onclick="diAdd('#')">#</button></div>
+          <div class="krow"><button class="kbtn" onclick="diAdd('+')" style="font-size:14px;letter-spacing:1px">+</button><button class="kbtn" style="background:rgba(0,230,118,.15);border-color:var(--success)" onclick="dial()">📞</button><button class="kbtn" onclick="diDel()">⌫</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="p-history" class="pane">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="stitle" style="margin:0">Call History</div>
+        <button class="log-btn" onclick="loadHistory()">🔄 Refresh</button>
+      </div>
+      <div id="hist-list"><div class="empty">Loading...</div></div>
+    </div>
+    <div id="p-contacts" class="pane">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="stitle" style="margin:0">Contacts</div>
+        <button class="log-btn" onclick="loadContacts()">🔄 Refresh</button>
+      </div>
+      <div style="margin-bottom:10px"><input type="text" id="csearch" placeholder="Search..." oninput="filterContacts()"
+        style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;outline:none"/></div>
+      <div id="cont-list"><div class="empty">Loading...</div></div>
+    </div>
+    <div id="p-sms" class="pane">
+      <div class="scomp"><h4>✍️ New SMS</h4>
+        <div class="srow"><input type="tel" id="sms-to" placeholder="Recipient"/></div>
+        <div class="srow"><textarea id="sms-body" placeholder="Message..."></textarea></div>
+        <button class="btn-send" onclick="sendSms()">📤 Send</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="stitle" style="margin:0">SMS History</div>
+        <button class="log-btn" onclick="loadSms()">🔄 Refresh</button>
+      </div>
+      <div id="sms-list"><div class="empty">Loading...</div></div>
+    </div>
+    <div id="p-logs" class="pane">
+      <div id="log-toolbar">
+        <span>Connection logs</span>
+        <div class="log-btns">
+          <button class="log-btn" onclick="copyLogs()">📋 Copy</button>
+          <button class="log-btn" onclick="clearLogs()">🗑 Clear</button>
+        </div>
+      </div>
+      <div id="log-box"></div>
+    </div>
+
+    <!-- TEST PANEL -->
+    <div id="p-test" class="pane">
+      <div id="perm-banner-app" class="perm-banner" style="display:none;margin-bottom:14px">
+        <span>⚠️ Microphone not allowed — grant access first</span>
+        <button onclick="requestMicPermission()">Allow Mic</button>
+      </div>
+
+      <!-- MIC TEST -->
+      <div class="test-panel">
+        <h4>🎙 Microphone Test</h4>
+        <div class="test-row">
+          <label>Mic input</label>
+          <button id="btn-mic-test" class="btn-test" onclick="toggleMicTest()">▶ Start test</button>
+          <div class="test-result" id="mic-test-result">Press Start to test microphone</div>
+        </div>
+        <div class="test-row">
+          <label>Level</label>
+          <div class="vol-bar"><div class="vol-fill" id="mic-vol-fill"></div></div>
+          <span id="mic-vol-db" style="font-size:11px;color:var(--muted);min-width:50px"></span>
+        </div>
+        <div class="test-row">
+          <label>Device</label>
+          <select id="mic-select" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;outline:none" onchange="switchMicDevice()">
+            <option value="">Default microphone</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SPEAKER TEST -->
+      <div class="test-panel">
+        <h4>🔊 Speaker / Headphones Test</h4>
+        <div class="test-row">
+          <label>Play tone</label>
+          <button id="btn-spk-test" class="btn-test" onclick="toggleSpeakerTest()">▶ Play tone</button>
+          <div class="test-result" id="spk-test-result">Press Play to test speakers</div>
+        </div>
+        <div class="test-row">
+          <label>Volume</label>
+          <input type="range" id="spk-vol" min="0" max="100" value="50"
+            style="flex:1;accent-color:var(--accent)" oninput="setSpeakerVolume(this.value)"/>
+          <span id="spk-vol-val" style="font-size:11px;color:var(--muted);min-width:32px">50%</span>
+        </div>
+        <div class="test-row">
+          <label>Frequency</label>
+          <select id="spk-freq" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;outline:none" onchange="changeToneFreq()">
+            <option value="440">440 Hz (A4)</option>
+            <option value="1000">1000 Hz (mid)</option>
+            <option value="200">200 Hz (bass)</option>
+            <option value="4000">4000 Hz (hi)</option>
+          </select>
+          <div class="test-result" id="freq-result"></div>
+        </div>
+      </div>
+
+      <!-- ECHO TEST -->
+      <div class="test-panel">
+        <h4>🔄 Echo / Loopback Test <span style="font-size:11px;color:var(--muted);font-weight:400">(mic → speaker)</span></h4>
+        <div class="test-row">
+          <label>Loopback</label>
+          <button id="btn-echo-test" class="btn-test" onclick="toggleEchoTest()">▶ Start echo</button>
+          <div class="test-result" id="echo-test-result">Hear your own mic in speakers</div>
+        </div>
+        <div class="test-row" style="color:var(--muted);font-size:11px;padding-left:100px">
+          ⚠️ Use headphones to avoid feedback
+        </div>
+      </div>
+
+      <!-- PERMISSIONS STATUS -->
+      <div class="test-panel">
+        <h4>🔐 Permissions</h4>
+        <div class="test-row">
+          <label>Microphone</label>
+          <span id="perm-mic-status" style="font-size:13px">Checking...</span>
+          <button class="btn-test" onclick="requestMicPermission()" style="margin-left:8px">Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="rec-badge">⏺ Recording...</div>
+
+<script>
+'use strict';
+let ws=null, activeSim=null, contactsCache=[], logs=[];
+let audioCtx=null, recDest=null, recCtx=null, mediaRec=null, recChunks=[], isRec=false;
+let nextPlayTime=0, phoneConnected=false;
+const PHONE_SAMPLE_RATE=16000;
+
+// ── AUDIO GRAPH FACTORY ───────────────────────────────────────────────────
+// C-1, C-2 fix: единая точка создания/восстановления AudioContext и recPhoneGain.
+// recPhoneGain всегда создаётся вместе с audioCtx — нет шанса получить null.
+let recPhoneGain=null;
+
+function ensureAudioGraph(){
+  if(!audioCtx || audioCtx.state==='closed'){
+    audioCtx = new AudioContext();
+    recPhoneGain = audioCtx.createGain();
+    recPhoneGain.gain.value = 1.0;
+    recPhoneGain.connect(audioCtx.destination);
+  }
+}
+
+// ── МИК БРАУЗЕРА → ТЕЛЕФОН ────────────────────────────────────────────────
+let micStream=null, micProc=null, micActive=false;
+
+async function startMicToPhone(){
+  // M-1 fix: guard — только один активный мик
+  if(micActive || !ws || ws.readyState!==1) return;
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}
+    });
+    micStream = stream;
+    // C-2 fix: ensureAudioGraph восстановит закрытый контекст
+    ensureAudioGraph();
+    await audioCtx.resume();
+    const src = audioCtx.createMediaStreamSource(stream);
+    const proc = audioCtx.createScriptProcessor(4096, 1, 1);
+    micProc = proc;
+    const inSR = audioCtx.sampleRate;
+    const ratio = PHONE_SAMPLE_RATE / inSR; // downsample коэффициент
+    let phase = 0;
+    proc.onaudioprocess = (e) => {
+      if(!micActive || !ws || ws.readyState!==1) return;
+      const input = e.inputBuffer.getChannelData(0);
+      // Downsample inSR → 16kHz методом nearest-neighbor
+      const out = [];
+      for(let i=0;i<input.length;i++){
+        phase += ratio;
+        if(phase >= 1){ phase -= 1; out.push(input[i]); }
+      }
+      if(!out.length) return;
+      const pcm = new Int16Array(out.length);
+      for(let i=0;i<out.length;i++) pcm[i]=Math.max(-32768,Math.min(32767,out[i]*32768));
+      const frame = new Uint8Array(1+pcm.byteLength);
+      frame[0]=0x02;
+      frame.set(new Uint8Array(pcm.buffer),1);
+      ws.send(frame.buffer);
+    };
+    src.connect(proc);
+    // C-1 fix: ScriptProcessorNode не имеет .gain — нужен отдельный GainNode(0)
+    // иначе proc.connect(destination) отправляет мик в колонки = акустическое эхо
+    const silencer = audioCtx.createGain();
+    silencer.gain.value = 0;
+    proc.connect(silencer);
+    silencer.connect(audioCtx.destination); // нужен выход иначе Chrome глушит proc
+    micActive = true;
+    addLog('Mic → phone started','ok');
+  }catch(e){
+    addLog('Mic error: '+e.message,'err');
+  }
+}
+
+function stopMicToPhone(){
+  if(!micActive) return;
+  micActive = false;
+  try{ micProc?.disconnect(); }catch(e){}
+  try{ micStream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  micStream=null; micProc=null;
+  addLog('Mic → phone stopped','warn');
+}
+
+// ── LOGGING ──────────────────────────────────────────────────────────────
+function addLog(msg,type='def'){
+  const t=new Date().toLocaleTimeString('ru',{hour12:false});
+  logs.unshift({t,msg,type});
+  if(logs.length>500) logs.pop();
+  const box=document.getElementById('log-box'); if(!box) return;
+  const cls={ok:'log-ok',err:'log-err',warn:'log-warn',def:'log-def'}[type]||'log-def';
+  const div=document.createElement('div'); div.className=cls;
+  div.textContent=`${t}  ${msg}`; box.insertBefore(div,box.firstChild);
+  // N-2 fix: обрезаем DOM синхронно с JS-массивом
+  while(box.childNodes.length>500) box.removeChild(box.lastChild);
+}
+function copyLogs(){ navigator.clipboard.writeText(logs.map(l=>`${l.t}  ${l.msg}`).join('\n')).then(()=>alert('✅ Copied!')); }
+function clearLogs(){ logs=[]; document.getElementById('log-box').innerHTML=''; }
+
+// ── STATUS ────────────────────────────────────────────────────────────────
+function setStatus(text,state='def'){
+  document.getElementById('status-text').textContent=text;
+  const dot=document.getElementById('status-dot');
+  dot.className=state==='ok'?'ok':state==='err'?'err':state==='wait'?'wait':'';
+}
+function setBadge(ok){
+  const el=document.getElementById('conn-badge');
+  if(ok){el.textContent='🟢 Connected';el.className='badge ok';}
+  else{el.textContent='🔴 Disconnected';el.className='badge no';}
+}
+
+// ── CONNECT ───────────────────────────────────────────────────────────────
+function doConnect(){
+  const host=document.getElementById('srv-host').value.trim();
+  const port=document.getElementById('srv-port').value.trim()||'8765';
+  if(!host){showErr('Enter server IP address'); return;}
+  // Используем wss:// если страница открыта по HTTPS, иначе ws://
+  const wsProto = (location.protocol === 'https:') ? 'wss' : 'ws';
+  const url=`${wsProto}://${host}:${port}`;
+  document.getElementById('err-box').style.display='none';
+  const btn=document.getElementById('btn-conn');
+  btn.disabled=true; btn.textContent='⏳ Connecting...';
+  document.getElementById('conn-status').textContent=`Connecting to ${url}...`;
+  addLog(`Connecting → ${url}`);
+  connectWS(url);
+}
+function showErr(msg){const e=document.getElementById('err-box');e.textContent=msg;e.style.display='block';}
+
+function connectWS(url){
+  try{
+    ws=new WebSocket(url);
+    ws.binaryType='arraybuffer';
+    ws.onopen=()=>{
+      addLog('WebSocket connected','ok');
+      setStatus(`Connected to server`,'ok');
+      setBadge(true);
+      ws.send(JSON.stringify({type:'register',role:'browser'}));
+      showApp();
+      cmd({type:'get_state'});
+      startPing(); // начинаем измерять RTT сразу после подключения
+    };
+    ws.onmessage=(e)=>{
+      if(e.data instanceof ArrayBuffer){ handleAudio(e.data); return; }
+      try{ handle(JSON.parse(e.data)); }catch(err){}
+    };
+    ws.onclose=(e)=>{
+      addLog(`Disconnected (code ${e.code})`,'warn');
+      setBadge(false); setStatus('Disconnected','err');
+      phoneConnected=false;
+      updatePhoneStatus();
+      stopPing();
+      stopMicToPhone();
+      stopAudio();
+    };
+    ws.onerror=()=>{
+      addLog('WebSocket error','err');
+      showErr('Cannot connect to server. Is server.py running?');
+      resetConnBtn();
+    };
+  }catch(e){ showErr('Error: '+e.message); resetConnBtn(); }
+}
+
+function resetConnBtn(){const b=document.getElementById('btn-conn');b.disabled=false;b.textContent='🔗 Connect';}
+
+// ── AUDIO PLAYBACK (телефон → браузер) ───────────────────────────────────
+let _audioFrameCount=0;
+function handleAudio(buffer){
+  const view = new Uint8Array(buffer);
+  if(view.length < 2 || view[0] !== 0x01) return;
+
+  _audioFrameCount++;
+  if(_audioFrameCount===1||_audioFrameCount%100===0){
+    addLog(`🔊 Audio RX: frame #${_audioFrameCount} size=${buffer.byteLength}`,'ok');
+  }
+
+  ensureAudioGraph();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  document.getElementById('audio-bar').classList.add('on');
+
+  // C-2 fix: выравниваем длину до кратной 2 перед созданием Int16Array
+  const pcmBuf = buffer.slice(1);
+  const safeLen = pcmBuf.byteLength - (pcmBuf.byteLength % 2);
+  if(safeLen < 2) return;
+  const int16 = new Int16Array(pcmBuf, 0, safeLen / 2);
+  const nativeSR = audioCtx.sampleRate;
+  let float32;
+  if(nativeSR === PHONE_SAMPLE_RATE){
+    float32 = new Float32Array(int16.length);
+    for(let i=0;i<int16.length;i++) float32[i]=int16[i]/32768.0;
+  } else {
+    // Upsample 16kHz → нативный SR (линейная интерполяция)
+    const ratio = nativeSR / PHONE_SAMPLE_RATE;
+    const outLen = Math.round(int16.length * ratio);
+    float32 = new Float32Array(outLen);
+    for(let i=0;i<outLen;i++){
+      const si=i/ratio, lo=Math.floor(si), hi=Math.min(lo+1,int16.length-1);
+      float32[i]=((int16[lo]*(1-(si-lo))+int16[hi]*(si-lo))/32768.0);
+    }
+  }
+  const abuf = audioCtx.createBuffer(1, float32.length, nativeSR);
+  abuf.copyToChannel(float32, 0);
+  const src = audioCtx.createBufferSource();
+  src.buffer = abuf;
+  src.connect(recPhoneGain); // recPhoneGain гарантированно non-null
+  const now = audioCtx.currentTime;
+  const MAX_AHEAD = 0.3;
+  if(nextPlayTime < now || nextPlayTime > now+MAX_AHEAD) nextPlayTime = now+0.05;
+  src.start(nextPlayTime);
+  nextPlayTime += abuf.duration;
+}
+
+function stopAudio(){
+  if(audioCtx){
+    try{ audioCtx.close(); }catch(e){}
+    audioCtx = null;
+    recPhoneGain = null; // M-2 fix: сбрасываем вместе с контекстом
+    nextPlayTime = 0;
+  }
+  document.getElementById('audio-bar').classList.remove('on');
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────
+function showApp(){
+  document.getElementById('connect-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+}
+function doDisconnect(){
+  // MIN-1 fix: сначала отключаем мик (пока контекст жив), потом закрываем контекст
+  stopMicToPhone();
+  stopAudio();
+  if(isRec && mediaRec && mediaRec.state !== 'inactive'){
+    mediaRec.addEventListener('stop', ()=>{ if(ws){try{ws.close();}catch(e){}} ws=null; }, {once:true});
+    stopRec();
+  } else {
+    stopRec();
+    if(ws){try{ws.close();}catch(e){}} ws=null;
+  }
+  document.getElementById('app').style.display='none';
+  document.getElementById('connect-screen').style.display='flex';
+  resetConnBtn();
+  addLog('Disconnected by user','warn');
+}
+
+function cmd(obj){
+  if(!ws||ws.readyState!==1){
+    addLog('ERROR: Not connected to server','err');
+    return;
+  }
+  addLog('→ '+obj.type,'def');
+  ws.send(JSON.stringify(obj));
+}
+
+function handle(m){
+  switch(m.type){
+    case 'server_status':
+      phoneConnected=m.phone_connected;
+      updatePhoneStatus();
+      break;
+    case 'phone_disconnected':
+      phoneConnected=false; updatePhoneStatus();
+      stopAudio(); stopMicToPhone(); addLog('Phone disconnected','warn');
+      break;
+    case 'state':
+      phoneConnected=true; updatePhoneStatus();
+      updateCallBar(m.callStatus,m.callNumber);
+      renderSims(m.sims||[]);
+      break;
+    case 'call_state': updateCallBar(m.status,m.number); break;
+    case 'call_history': renderHistory(m.data); break;
+    case 'contacts': renderContacts(m.data); break;
+    case 'sms_history': renderSms(m.data); break;
+    case 'dial_result': if(!m.success) alert('Call failed'); break;
+    case 'hangup_result':
+      // UI сбрасываем сразу по hangup_result, не ждём call_state:IDLE (может запоздать)
+      updateCallBar('IDLE', null);
+      stopMicToPhone();
+      stopAudio();
+      addLog('📵 Call ended','warn');
+      break;
+    case 'send_sms_result':
+      if(m.success){document.getElementById('sms-to').value='';document.getElementById('sms-body').value='';alert('✅ SMS sent!');}
+      else alert('❌ SMS failed'); break;
+    case 'rec_ack':
+      if(m.status==='stopped' && m.path) addLog('✅ Recording saved: '+m.path,'ok');
+      else if(m.status==='started') addLog('⏺ Recording → server: '+m.path,'ok');
+      break;
+    case 'error': addLog('Error: '+m.message,'err'); break;
+    case 'pong': handlePong(m); break;
+  }
+}
+
+// ── PING / RTT ────────────────────────────────────────────────────────────
+let _pingTs = 0, _pingTimer = null, _pingInterval = null;
+let _rttHistory = [], _pingMissed = 0;
+
+function startPing(){
+  stopPing();
+  // Первый пинг сразу — до звонка покажем RTT до сервера
+  sendPing();
+  _pingInterval = setInterval(sendPing, 2000);
+}
+function stopPing(){
+  if(_pingInterval){ clearInterval(_pingInterval); _pingInterval=null; }
+  if(_pingTimer){ clearTimeout(_pingTimer); _pingTimer=null; }
+  document.getElementById('rtt-badge').style.display='none';
+}
+function sendPing(){
+  if(!ws || ws.readyState!==1) return;
+  _pingTs = performance.now();
+  const ts = Date.now();
+  cmd({type:'ping', ts});
+  // Таймаут — если pong не пришёл за 3с
+  if(_pingTimer) clearTimeout(_pingTimer);
+  _pingTimer = setTimeout(()=>{
+    _pingMissed++;
+    updateRttBadge(null);
+    if(_pingMissed >= 3) addLog('⚠️ Phone not responding to ping ('+_pingMissed+' missed)','warn');
+  }, 3000);
+}
+function handlePong(m){
+  if(_pingTimer){ clearTimeout(_pingTimer); _pingTimer=null; }
+  _pingMissed = 0;
+  const rtt = Math.round(performance.now() - _pingTs);
+  _rttHistory.push(rtt);
+  if(_rttHistory.length > 10) _rttHistory.shift();
+  updateRttBadge(rtt);
+  // Показываем RTT в call-bar во время звонка
+  const crtt = document.getElementById('c-rtt');
+  if(crtt && document.getElementById('call-bar').classList.contains('on')){
+    crtt.style.display='block';
+    const color = rtt<80?'var(--success)':rtt<200?'var(--warn)':'var(--danger)';
+    crtt.innerHTML=`<span style="color:${color}">⚡ ${rtt}ms</span>`;
+  }
+}
+function updateRttBadge(rtt){
+  const el = document.getElementById('rtt-badge');
+  if(!el) return;
+  if(rtt === null){
+    el.style.display='inline';
+    el.style.color='var(--danger)';
+    el.textContent='⚡ timeout';
+    return;
+  }
+  el.style.display='inline';
+  const avg = Math.round(_rttHistory.reduce((a,b)=>a+b,0)/_rttHistory.length);
+  el.textContent=`⚡ ${rtt}ms (avg ${avg}ms)`;
+  el.style.color = rtt < 50 ? 'var(--success)' : rtt < 150 ? 'var(--warn)' : 'var(--danger)';
+}
+
+let _lastPhoneConnected = null;
+function updatePhoneStatus(){
+  if(phoneConnected){
+    setStatus('Phone connected ✓','ok');
+    if(_lastPhoneConnected !== true) addLog('Phone connected ✓','ok');
+  } else {
+    setStatus('Waiting for phone...','wait');
+    if(_lastPhoneConnected !== false) addLog('Waiting for phone to connect...','warn');
+  }
+  _lastPhoneConnected = phoneConnected;
+}
+
+function tab(name,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('p-'+name).classList.add('act');
+  btn.classList.add('act');
+}
+function updateCallBar(status,number){
+  const bar=document.getElementById('call-bar'),acc=document.getElementById('btn-acc');
+  if(status==='IDLE'){bar.classList.remove('on');stopRec();const cr=document.getElementById('c-rtt');if(cr)cr.style.display='none';return;}
+  bar.classList.add('on');
+  document.getElementById('c-status').textContent=status==='INCOMING'?'📲 Incoming':status==='DIALING'?'📤 Dialing':'📞 In Call';
+  document.getElementById('c-number').textContent=number||'';
+  document.getElementById('cpulse').className='cpulse'+(status==='INCOMING'?' ring':'');
+  acc.style.display=status==='INCOMING'?'inline-block':'none';
+  if(status==='ACTIVE' && !micActive){ startMicToPhone(); }
+  if(status==='IDLE'||status==='DIALING') stopMicToPhone();
+}
+function renderSims(sims){
+  const el=document.getElementById('sim-sel');el.innerHTML='';
+  if(!sims||!sims.length) return;
+  sims.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className='sbtn'+(i===0?' act':'');b.textContent='📶 '+s.displayName;
+    b.onclick=()=>{activeSim=s.subscriptionId;document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');};
+    el.appendChild(b);if(i===0) activeSim=s.subscriptionId;
+  });
+}
+function diAdd(d){document.getElementById('di').value+=d;}
+function diDel(){const e=document.getElementById('di');e.value=e.value.slice(0,-1);}
+function dial(){
+  const n=document.getElementById('di').value.trim();if(!n) return;
+  const c={type:'dial',number:n};if(activeSim!==null) c.subscriptionId=activeSim;
+  cmd(c);addLog('Dialing: '+n);
+}
+
+// ── RECORDING ─────────────────────────────────────────────────────────────
+async function toggleRec(){if(isRec) stopRec();else await startRec();}
+async function startRec(){
+  if(isRec) return;
+  try{
+    const mic = await navigator.mediaDevices.getUserMedia({audio:true});
+    // Bug#11 fix: recCtx хранится в модульной переменной и закрывается при stopRec
+    if(recCtx){ try{recCtx.close();}catch(e){} recCtx=null; }
+    recCtx = new AudioContext();
+    recDest = recCtx.createMediaStreamDestination();
+    recCtx.createMediaStreamSource(mic).connect(recDest);
+    if(audioCtx && recPhoneGain){
+      try{
+        const phoneCapture = audioCtx.createMediaStreamDestination();
+        recPhoneGain.connect(phoneCapture);
+        recCtx.createMediaStreamSource(phoneCapture.stream).connect(recDest);
+      }catch(e){ addLog('Phone audio capture: '+e.message,'warn'); }
+    }
+    const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/webm';
+    mediaRec=new MediaRecorder(recDest.stream,{mimeType:mime}); recChunks=[];
+    // N-2 fix: catch внутри async ondataavailable
+    mediaRec.ondataavailable=async e=>{
+      if(e.data.size>0){
+        recChunks.push(e.data);
+        if(ws && ws.readyState===1){
+          try{
+            const ab = await e.data.arrayBuffer();
+            const frame = new Uint8Array(1+ab.byteLength);
+            frame[0]=0x03;
+            frame.set(new Uint8Array(ab),1);
+            ws.send(frame.buffer);
+          }catch(err){ addLog('rec chunk error: '+err.message,'warn'); }
+        }
+      }
+    };
+    mediaRec.onstop=()=>{
+      const blob=new Blob(recChunks,{type:mime}); const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url;
+      a.download='call_'+new Date().toISOString().replace(/[:.]/g,'-')+'.webm';
+      a.click(); URL.revokeObjectURL(url);
+      cmd({type:'rec_stop'});
+      // Bug#11 fix: закрываем recCtx после завершения записи
+      if(recCtx){ try{recCtx.close();}catch(e){} recCtx=null; }
+    };
+    // M-2 fix: сначала start(), потом rec_start на сервер
+    mediaRec.start(500);
+    cmd({type:'rec_start'});
+    isRec=true;
+    document.getElementById('btn-rec').textContent='⏹ Stop';
+    document.getElementById('btn-rec').classList.add('on');
+    document.getElementById('rec-badge').style.display='block';
+    addLog('Recording started (mic + phone audio)','ok');
+  }catch(e){alert('Recording error: '+e.message);}
+}
+function stopRec(){
+  if(!isRec) return; isRec=false;
+  try{mediaRec?.stop();}catch(e){}
+  const b=document.getElementById('btn-rec');
+  if(b){b.textContent='⏺ Rec';b.classList.remove('on');}
+  document.getElementById('rec-badge').style.display='none';
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+function loadHistory(){cmd({type:'get_call_history'});}
+function renderHistory(data){
+  const el=document.getElementById('hist-list'),list=arr(data);
+  if(!list.length){el.innerHTML='<div class="empty">📭 No history</div>';return;}
+  el.innerHTML=list.map(r=>{
+    const ic=r.type===1?'📥':r.type===2?'📤':'📵';
+    return `<div class="item"><div class="ico">${ic}</div><div class="ibody"><div class="ititle">${esc(r.name||r.number)}</div><div class="imeta">${new Date(r.date).toLocaleString()}${r.duration?' · '+fmtDur(r.duration):''}</div></div><div class="iacts"><button class="bico" onclick="quickDial('${esc(r.number)}')">📞</button></div></div>`;
+  }).join('');
+}
+function loadContacts(){cmd({type:'get_contacts'});}
+function renderContacts(data){contactsCache=arr(data);showContacts(contactsCache);}
+function filterContacts(){
+  const q=document.getElementById('csearch').value.toLowerCase();
+  showContacts(contactsCache.filter(c=>c.name.toLowerCase().includes(q)||(c.numbers||[]).some(n=>n.includes(q))));
+}
+function showContacts(list){
+  const el=document.getElementById('cont-list');
+  if(!list.length){el.innerHTML='<div class="empty">👤 No contacts</div>';return;}
+  el.innerHTML=list.map(c=>{
+    const f=(c.numbers||[])[0]||'';
+    return `<div class="item"><div class="ico">👤</div><div class="ibody"><div class="ititle">${esc(c.name)}</div><div class="imeta">${(c.numbers||[]).map(esc).join(' · ')}</div></div><div class="iacts">${f?`<button class="bico" onclick="quickDial('${esc(f)}')">📞</button>`:''}${f?`<button class="bico" onclick="smsTo('${esc(f)}')">💬</button>`:''}</div></div>`;
+  }).join('');
+}
+function loadSms(){cmd({type:'get_sms'});}
+function renderSms(data){
+  const el=document.getElementById('sms-list'),list=arr(data).sort((a,b)=>b.date-a.date);
+  if(!list.length){el.innerHTML='<div class="empty">💬 No SMS</div>';return;}
+  el.innerHTML=list.map(r=>`<div class="item"><div class="ico">${r.type===1?'📥':'📤'}</div><div class="ibody"><div class="ititle">${esc(r.address)}</div><div class="imeta" style="white-space:normal;line-height:1.4">${esc(r.body)}</div><div class="imeta">${new Date(r.date).toLocaleString()}</div></div><div class="iacts"><button class="bico" onclick="smsTo('${esc(r.address)}')">↩</button></div></div>`).join('');
+}
+function sendSms(){
+  const to=document.getElementById('sms-to').value.trim(),body=document.getElementById('sms-body').value.trim();
+  if(!to||!body){alert('Fill recipient and message');return;}
+  const c={type:'send_sms',to,body};if(activeSim!==null) c.subscriptionId=activeSim;cmd(c);
+}
+function smsTo(n){tab('sms',document.querySelectorAll('.tbtn')[3]);document.getElementById('sms-to').value=n;}
+function quickDial(n){document.getElementById('di').value=n;tab('dialer',document.querySelectorAll('.tbtn')[0]);dial();}
+function fmtDur(s){return s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';}
+// MINOR-10 fix: экранируем одинарные кавычки против XSS
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function arr(d){if(Array.isArray(d)) return d;try{return JSON.parse(d);}catch(e){return [];}}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+// Сохраняем последний IP
+const savedHost=localStorage.getItem('gw_host');
+const savedPort=localStorage.getItem('gw_port');
+if(savedHost) document.getElementById('srv-host').value=savedHost;
+if(savedPort) document.getElementById('srv-port').value=savedPort;
+document.getElementById('srv-host').addEventListener('input',function(){localStorage.setItem('gw_host',this.value);});
+document.getElementById('srv-port').addEventListener('input',function(){localStorage.setItem('gw_port',this.value);});
+document.getElementById('srv-host').addEventListener('keydown',function(e){if(e.key==='Enter') doConnect();});
+
+// Автоподключение если открыто с сервера (не file://, не пустой хост)
+(function autoConnect(){
+  const h = window.location.hostname;
+  if(!h || h==='') return; // file:// — ручное подключение
+  const p = window.location.port ||
+            (window.location.protocol === 'https:' ? '443' : '80');
+  document.getElementById('srv-host').value = h;
+  document.getElementById('srv-port').value = p;
+  const btn=document.getElementById('btn-conn');
+  btn.disabled=true; btn.textContent='⏳ Connecting...';
+  document.getElementById('conn-status').textContent=`Auto-connecting to ${h}:${p}...`;
+  setTimeout(doConnect, 300);
+})();
+
+// ── MIC PERMISSION ────────────────────────────────────────────────────────
+// Запрашиваем разрешение на микрофон сразу при загрузке страницы
+async function requestMicPermission(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    stream.getTracks().forEach(t=>t.stop()); // получили разрешение — сразу останавливаем
+    document.getElementById('perm-banner').style.display='none';
+    const appBanner = document.getElementById('perm-banner-app');
+    if(appBanner) appBanner.style.display='none';
+    const st = document.getElementById('perm-mic-status');
+    if(st){ st.textContent='✅ Allowed'; st.style.color='var(--success)'; }
+    addLog('Microphone permission granted','ok');
+    // Заполняем список устройств
+    await enumerateMicDevices();
+  }catch(e){
+    const banner = document.getElementById('perm-banner');
+    banner.style.display='flex';
+    const appBanner = document.getElementById('perm-banner-app');
+    if(appBanner) appBanner.style.display='flex';
+    const st = document.getElementById('perm-mic-status');
+    if(st){ st.textContent='❌ Denied — '+e.message; st.style.color='var(--danger)'; }
+    addLog('Microphone denied: '+e.message,'err');
+  }
+}
+
+async function checkMicPermission(){
+  if(!navigator.permissions) return;
+  try{
+    const res = await navigator.permissions.query({name:'microphone'});
+    const st = document.getElementById('perm-mic-status');
+    if(res.state==='granted'){
+      if(st){ st.textContent='✅ Allowed'; st.style.color='var(--success)'; }
+      document.getElementById('perm-banner').style.display='none';
+      await enumerateMicDevices();
+    } else if(res.state==='denied'){
+      if(st){ st.textContent='❌ Denied'; st.style.color='var(--danger)'; }
+      document.getElementById('perm-banner').style.display='flex';
+    } else {
+      if(st){ st.textContent='⚠️ Not yet requested'; st.style.color='var(--warn)'; }
+      // Промпт — покажем баннер
+      document.getElementById('perm-banner').style.display='flex';
+      // Автозапрос
+      await requestMicPermission();
+    }
+    res.onchange = checkMicPermission;
+  }catch(e){
+    // Safari не поддерживает permissions API — пробуем запросить напрямую
+    await requestMicPermission();
+  }
+}
+
+async function enumerateMicDevices(){
+  try{
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d=>d.kind==='audioinput');
+    const sel = document.getElementById('mic-select');
+    if(!sel) return;
+    sel.innerHTML='';
+    mics.forEach((d,i)=>{
+      const opt=document.createElement('option');
+      opt.value=d.deviceId;
+      opt.textContent=d.label||`Microphone ${i+1}`;
+      sel.appendChild(opt);
+    });
+  }catch(e){}
+}
+
+// ── MIC TEST ──────────────────────────────────────────────────────────────
+let micTestStream=null, micTestCtx=null, micTestAnalyser=null, micTestAnimId=null;
+let micTestActive=false;
+
+async function toggleMicTest(){
+  if(micTestActive) stopMicTest(); else await startMicTest();
+}
+
+async function startMicTest(){
+  const btn=document.getElementById('btn-mic-test');
+  const res=document.getElementById('mic-test-result');
+  btn.className='btn-test running'; btn.textContent='⏹ Stop test';
+  res.textContent='Requesting microphone...';
+  try{
+    const deviceId = document.getElementById('mic-select')?.value||undefined;
+    const constraints={audio: deviceId ? {deviceId:{exact:deviceId}} : true};
+    micTestStream = await navigator.mediaDevices.getUserMedia(constraints);
+    micTestCtx = new AudioContext();
+    const src = micTestCtx.createMediaStreamSource(micTestStream);
+    micTestAnalyser = micTestCtx.createAnalyser();
+    micTestAnalyser.fftSize=256;
+    src.connect(micTestAnalyser);
+    micTestActive=true;
+    res.textContent='🎙 Speak into microphone — watching level...';
+    btn.className='btn-test running';
+    animateMicLevel();
+    // Разрешение получено — обновляем статус
+    const st=document.getElementById('perm-mic-status');
+    if(st){st.textContent='✅ Allowed';st.style.color='var(--success)';}
+    document.getElementById('perm-banner').style.display='none';
+    const appBanner=document.getElementById('perm-banner-app');
+    if(appBanner) appBanner.style.display='none';
+  }catch(e){
+    btn.className='btn-test err'; btn.textContent='▶ Start test';
+    res.textContent='❌ '+e.message;
+    micTestActive=false;
+  }
+}
+
+function stopMicTest(){
+  micTestActive=false;
+  if(micTestAnimId){ cancelAnimationFrame(micTestAnimId); micTestAnimId=null; }
+  try{ micTestStream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ micTestCtx?.close(); }catch(e){}
+  micTestStream=null; micTestCtx=null; micTestAnalyser=null;
+  document.getElementById('btn-mic-test').className='btn-test';
+  document.getElementById('btn-mic-test').textContent='▶ Start test';
+  document.getElementById('mic-test-result').textContent='Stopped.';
+  document.getElementById('mic-vol-fill').style.width='0%';
+  document.getElementById('mic-vol-db').textContent='';
+}
+
+function animateMicLevel(){
+  if(!micTestActive||!micTestAnalyser){return;}
+  const data=new Uint8Array(micTestAnalyser.frequencyBinCount);
+  micTestAnalyser.getByteTimeDomainData(data);
+  let sum=0;
+  for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+  const rms=Math.sqrt(sum/data.length);
+  const pct=Math.min(100,Math.round(rms*400));
+  const db=rms>0?Math.round(20*Math.log10(rms)):-60;
+  document.getElementById('mic-vol-fill').style.width=pct+'%';
+  document.getElementById('mic-vol-db').textContent=db>-60?db+' dB':'silent';
+  // Цвет по уровню
+  const fill=document.getElementById('mic-vol-fill');
+  fill.style.background=pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--accent)';
+  if(pct>5&&document.getElementById('mic-test-result').textContent.includes('Speak')){
+    document.getElementById('mic-test-result').textContent='✅ Signal detected! Microphone works.';
+    document.getElementById('btn-mic-test').className='btn-test ok';
+  }
+  micTestAnimId=requestAnimationFrame(animateMicLevel);
+}
+
+async function switchMicDevice(){
+  if(micTestActive){ stopMicTest(); await startMicTest(); }
+}
+
+// ── SPEAKER TEST ──────────────────────────────────────────────────────────
+let spkTestCtx=null, spkOscillator=null, spkGain=null, spkActive=false;
+
+function toggleSpeakerTest(){
+  if(spkActive) stopSpeakerTest(); else startSpeakerTest();
+}
+
+function startSpeakerTest(){
+  const btn=document.getElementById('btn-spk-test');
+  const res=document.getElementById('spk-test-result');
+  try{
+    spkTestCtx=new AudioContext();
+    spkOscillator=spkTestCtx.createOscillator();
+    spkGain=spkTestCtx.createGain();
+    const freq=parseInt(document.getElementById('spk-freq')?.value||'440');
+    spkOscillator.type='sine';
+    spkOscillator.frequency.value=freq;
+    const vol=(parseInt(document.getElementById('spk-vol')?.value||'50'))/100*0.3;
+    spkGain.gain.value=vol;
+    spkOscillator.connect(spkGain);
+    spkGain.connect(spkTestCtx.destination);
+    spkOscillator.start();
+    spkActive=true;
+    btn.className='btn-test ok'; btn.textContent='⏹ Stop tone';
+    res.textContent='🔊 Playing '+freq+' Hz — can you hear it?';
+  }catch(e){
+    btn.className='btn-test err';
+    res.textContent='❌ '+e.message;
+  }
+}
+
+function stopSpeakerTest(){
+  spkActive=false;
+  try{ spkOscillator?.stop(); }catch(e){}
+  try{ spkTestCtx?.close(); }catch(e){}
+  spkTestCtx=null; spkOscillator=null; spkGain=null;
+  document.getElementById('btn-spk-test').className='btn-test';
+  document.getElementById('btn-spk-test').textContent='▶ Play tone';
+  document.getElementById('spk-test-result').textContent='Stopped.';
+}
+
+function setSpeakerVolume(v){
+  document.getElementById('spk-vol-val').textContent=v+'%';
+  if(spkGain) spkGain.gain.value=parseInt(v)/100*0.3;
+}
+
+function changeToneFreq(){
+  const freq=parseInt(document.getElementById('spk-freq').value);
+  if(spkOscillator) spkOscillator.frequency.value=freq;
+  if(spkActive) document.getElementById('spk-test-result').textContent='🔊 Playing '+freq+' Hz — can you hear it?';
+}
+
+// ── ECHO TEST ─────────────────────────────────────────────────────────────
+let echoStream=null, echoCtx=null, echoActive=false;
+
+async function toggleEchoTest(){
+  if(echoActive) stopEchoTest(); else await startEchoTest();
+}
+
+async function startEchoTest(){
+  const btn=document.getElementById('btn-echo-test');
+  const res=document.getElementById('echo-test-result');
+  btn.className='btn-test running'; btn.textContent='⏹ Stop echo';
+  res.textContent='Requesting mic...';
+  try{
+    echoStream=await navigator.mediaDevices.getUserMedia({
+      audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}
+    });
+    echoCtx=new AudioContext();
+    const src=echoCtx.createMediaStreamSource(echoStream);
+    // Небольшая задержка чтобы было очевидно что это эхо, а не прямой звук
+    const delay=echoCtx.createDelay(0.1);
+    delay.delayTime.value=0.05;
+    src.connect(delay);
+    delay.connect(echoCtx.destination);
+    echoActive=true;
+    btn.className='btn-test ok';
+    res.textContent='🎙🔊 Mic → Speakers active. Speak and hear yourself!';
+  }catch(e){
+    btn.className='btn-test err'; btn.textContent='▶ Start echo';
+    res.textContent='❌ '+e.message;
+    echoActive=false;
+  }
+}
+
+function stopEchoTest(){
+  echoActive=false;
+  try{ echoStream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ echoCtx?.close(); }catch(e){}
+  echoStream=null; echoCtx=null;
+  document.getElementById('btn-echo-test').className='btn-test';
+  document.getElementById('btn-echo-test').textContent='▶ Start echo';
+  document.getElementById('echo-test-result').textContent='Stopped.';
+}
+
+// Запрашиваем разрешение на микрофон сразу при загрузке
+checkMicPermission();
+
+// ── HTTP → HTTPS REDIRECT HINT ────────────────────────────────────────────
+(function checkHttps(){
+  if(location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1'){
+    const httpsUrl = location.href.replace('http://', 'https://');
+    const warn = document.getElementById('http-warn');
+    const lnk  = document.getElementById('https-link-txt');
+    if(warn && lnk){
+      lnk.textContent = httpsUrl;
+      warn.style.display = 'flex';
+    }
+  }
+})();
+
+function gotoHttps(){
+  location.href = location.href.replace('http://', 'https://');
+}
+</script>
+</body>
+</html>
